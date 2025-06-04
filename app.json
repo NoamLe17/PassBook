@@ -1,7 +1,10 @@
 {
+  "name": "PassBook",
+  "displayName": "PassBook",
   "expo": {
-    "name": "BookSwapApp",
-    "slug": "BookSwapApp",
+    "name": "PassBook",
+    "slug": "PassBook",
+    "scheme": "PassBook",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
