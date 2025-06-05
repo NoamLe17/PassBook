@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, Dimensions, I18nManager, TouchableOpacity, Button } from 'react-native';
+import { View, Text, FlatList,Pressable, StyleSheet, Dimensions,Modal, I18nManager, TouchableOpacity, Button } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import Slider from '@react-native-community/slider';
 import * as Location from 'expo-location';
 I18nManager.forceRTL(true);
 
@@ -14,6 +15,7 @@ export default function HomeScreen({ navigation, route }) {
   const [books, setBooks] = useState(initialBooks);
   const [maxDistance, setMaxDistance] = useState(50);
   const [showOptions, setShowOptions] = useState(false);
+   const [distanceModalVisible, setDistanceModalVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -99,14 +101,46 @@ export default function HomeScreen({ navigation, route }) {
             description={book.author}
           />
         ))}
+        {/* כפתור לבחירת טווח מרחק */}
+          <TouchableOpacity style={styles.fab} onPress={() => setDistanceModalVisible(true)}>
+            <Text style={styles.fabText}>📍</Text>
+          </TouchableOpacity>
       </MapView>
+      {/* מודאל מרחק */}
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={distanceModalVisible}
+            onRequestClose={() => setDistanceModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalView}>
+                <Text style={styles.modalTitle}>בחר טווח מרחק</Text>
+                <Slider
+                  minimumValue={1}
+                  maximumValue={250}
+                  step={1}
+                  value={maxDistance}
+                  onValueChange={setMaxDistance}
+                  minimumTrackTintColor="#FF5C5C"
+                  maximumTrackTintColor="#999"
+                />
+                <Text style={{ textAlign: 'center', marginTop: 10,marginBottom: 10, fontSize: 20}}>
+                  {maxDistance} ק"מ
+                </Text>
+                <Pressable
+                  style={styles.saveButton}
+                  onPress={() => setDistanceModalVisible(false)}
+                >
+                  <Text style={styles.saveButtonText}>אישור</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
 
       <View style={styles.listContainer}>
         <View style={styles.headerRow}>
           <Text style={styles.header}>ספרים זמינים למסירה</Text>
-          <TouchableOpacity onPress={() => setShowOptions(!showOptions)}>
-            <Text style={styles.sliderToggle}>בחר מרחק: 📏</Text>
-          </TouchableOpacity>
         </View>
 
         {showOptions && <DistanceOptions />}
@@ -142,6 +176,60 @@ const styles = StyleSheet.create({
     flex: 0.64,
     width: Dimensions.get('window').width,
   },
+
+  fab: {
+  position: 'absolute',
+  bottom: 10,
+  left: 10,
+  backgroundColor: '#FF5C5C',
+  width: 40,
+  height: 40,
+  borderRadius: 22, 
+  justifyContent: 'center',
+  alignItems: 'center',
+  elevation: 5,
+  shadowColor: 'black',
+  shadowOpacity: 0.3,
+  shadowRadius: 3,
+  shadowOffset: { width: 0, height: 2 },
+},
+fabText: {
+  color: 'white',
+  fontSize: 18, 
+  lineHeight: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  modalView: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 30,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 15, 
+    textAlign: 'center',
+    color: '#FF5C5C',
+  },
+  saveButton: {
+    backgroundColor: '#FF5C5C',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  saveButtonText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+
   listContainer: {
     flex: 0.36,
     paddingHorizontal: 20,
@@ -166,12 +254,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1C3B72',
   },
-  sliderToggle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginTop: 6,
-    color: '#1C3B72',
-  },
   optionsContainer: {
     marginBottom: 10,
     backgroundColor: '#EEE',
@@ -189,7 +271,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 16,
     marginBottom: 14,
-    borderColor: '#1C3B72',
+    borderColor: '#1C3B728',
     borderWidth: 0.7,
     shadowColor: '#1C3B72',
     shadowOffset: { width: 0, height: 2 },
