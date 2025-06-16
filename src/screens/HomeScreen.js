@@ -3,6 +3,7 @@ import { View, Text, FlatList,Pressable, StyleSheet, Dimensions,Modal, I18nManag
 import MapView, { Marker } from 'react-native-maps';
 import Slider from '@react-native-community/slider';
 import * as Location from 'expo-location';
+import SearchLocation from '../components/SearchLocation';
 I18nManager.forceRTL(true);
 
 const initialBooks = [
@@ -82,6 +83,15 @@ export default function HomeScreen({ navigation, route }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      {/* Search Location Button */}
+      <View style={{ position: 'absolute', top: 40, left: 20, zIndex: 10, right: 20 }}>
+        <SearchLocation
+          onLocationSelected={(coords, placeName) => {
+            setLocation(coords);
+            // Optionally update books distances if needed
+          }}
+        />
+      </View>
       <MapView
         style={styles.map}
         region={{
@@ -102,41 +112,41 @@ export default function HomeScreen({ navigation, route }) {
           />
         ))}
         {/* כפתור לבחירת טווח מרחק */}
-          <TouchableOpacity style={styles.fab} onPress={() => setDistanceModalVisible(true)}>
-            <Text style={styles.fabText}>📍</Text>
-          </TouchableOpacity>
+        <TouchableOpacity style={styles.fab} onPress={() => setDistanceModalVisible(true)}>
+          <Text style={styles.fabText}>📍</Text>
+        </TouchableOpacity>
       </MapView>
       {/* מודאל מרחק */}
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={distanceModalVisible}
-            onRequestClose={() => setDistanceModalVisible(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalView}>
-                <Text style={styles.modalTitle}>בחר טווח מרחק</Text>
-                <Slider
-                  minimumValue={1}
-                  maximumValue={250}
-                  step={1}
-                  value={maxDistance}
-                  onValueChange={setMaxDistance}
-                  minimumTrackTintColor="#FF5C5C"
-                  maximumTrackTintColor="#999"
-                />
-                <Text style={{ textAlign: 'center', marginTop: 10,marginBottom: 10, fontSize: 20}}>
-                  {maxDistance} ק"מ
-                </Text>
-                <Pressable
-                  style={styles.saveButton}
-                  onPress={() => setDistanceModalVisible(false)}
-                >
-                  <Text style={styles.saveButtonText}>אישור</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={distanceModalVisible}
+        onRequestClose={() => setDistanceModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>בחר טווח מרחק</Text>
+            <Slider
+              minimumValue={1}
+              maximumValue={250}
+              step={1}
+              value={maxDistance}
+              onValueChange={setMaxDistance}
+              minimumTrackTintColor="#FF5C5C"
+              maximumTrackTintColor="#999"
+            />
+            <Text style={{ textAlign: 'center', marginTop: 10, marginBottom: 10, fontSize: 20 }}>
+              {maxDistance} ק"מ
+            </Text>
+            <Pressable
+              style={styles.saveButton}
+              onPress={() => setDistanceModalVisible(false)}
+            >
+              <Text style={styles.saveButtonText}>אישור</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <View style={styles.listContainer}>
         <View style={styles.headerRow}>
@@ -181,7 +191,6 @@ const styles = StyleSheet.create({
   position: 'absolute',
   bottom: 10,
   left: 10,
-  backgroundColor: '#FF5C5C',
   width: 40,
   height: 40,
   borderRadius: 22, 

@@ -8,7 +8,9 @@ import SignUpScreen from '../screens/SignUpScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AddBookScreen from '../screens/AddBookScreen';
+import chatScreen from '../screens/ChatScreen';
 import Footer from '../components/Footer';
+import ChatScreen from '../screens/ChatScreen';
 
 const AuthStack = createNativeStackNavigator();
 const AppStack = createNativeStackNavigator();
@@ -81,6 +83,19 @@ export default function AppNavigator({ user, onLogin, onLogout }) {
             </View>
           )}
         </AppStack.Screen>     
+
+        <AppStack.Screen name="chat">
+          {(props) => (
+            <View style={{ flex: 1 }}>
+              <ChatScreen {...props} />
+              <Footer
+                activeTab={activeTab}
+                onTabPress={(tabName) => onTabPress(tabName, props.navigation)}
+              />
+            </View>
+          )}
+        </AppStack.Screen>  
+
       </AppStack.Navigator>
     </NavigationContainer>
   );

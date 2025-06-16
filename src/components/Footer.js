@@ -7,7 +7,7 @@ export default function Footer({ activeTab, onTabPress }) {
     { key: 'Profile', label: 'פרופיל', icon: 'user' },
     { key: 'Home', label: 'בית', icon: 'home' },
     { key: 'AddBook', label: 'הוסף ספר', icon: 'plus-square' },
-    
+    { key: 'chat', label: 'שיחות', icon: 'comments' },
   ];
 
   return (
