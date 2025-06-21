@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: '#666',
     textAlign: 'right',
-    writingDirection: 'rtl',
+    direction: 'ltr',
     paddingHorizontal: 12,
     paddingVertical: 10,
     backgroundColor: '#F3F6FB',

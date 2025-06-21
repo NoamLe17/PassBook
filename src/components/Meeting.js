@@ -140,6 +140,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'right',
+    direction: 'ltr',
     color: '#1C3B72',
   },
   input: {
@@ -166,6 +167,7 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 16,
     textAlign: 'right',
+    direction: 'ltr',
   },
   profileImage: {
     width: 120,
