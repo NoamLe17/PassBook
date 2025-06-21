@@ -8,9 +8,10 @@ import SignUpScreen from '../screens/SignUpScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AddBookScreen from '../screens/AddBookScreen';
-import chatScreen from '../screens/ChatScreen';
 import Footer from '../components/Footer';
 import ChatScreen from '../screens/ChatScreen';
+import Meeting from '../components/Meeting';
+
 
 const AuthStack = createNativeStackNavigator();
 const AppStack = createNativeStackNavigator();

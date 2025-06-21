@@ -19,6 +19,7 @@ export default function SignUpScreen({ onSignUp, onBackToSignIn }) {
       Alert.alert('ההרשמה בוצעה בהצלחה!');
       // מדווחים ל-App שהמשתמש נרשם וכנראה רוצים להיכנס מיד
       onSignUp({ email, method: 'email' });
+      navigation.replace('Meeting');
     }, 1500);
   }
 

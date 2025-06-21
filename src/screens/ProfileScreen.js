@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,10 +13,15 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import Meeting from '../components/Meeting'; 
 
 export default function ProfileScreen({ navigation, onLogout }) {
   const [profileImage, setProfileImage] = useState(null);
   const [favoriteGenres, setFavoriteGenres] = useState('');
+  const [city, setCity] = useState('');
+  const [ageRange, setAgeRange] = useState('');
+  const [hasCompletedMeeting, setHasCompletedMeeting] = useState(false);
+
   const [booksGiven, setBooksGiven] = useState([
     { id: '1', title: 'הארי פוטר ואבן החכמים' },
     { id: '2', title: 'שמש קופחת' },
@@ -34,6 +39,25 @@ export default function ProfileScreen({ navigation, onLogout }) {
   const [modalTitle, setModalTitle] = useState('');
   const [imageModalVisible, setImageModalVisible] = useState(false);
 
+  // בדיקה אם המשתמש כבר השלים היכרות (בדרך כלל זה יהיה שמור ב-AsyncStorage או בשרת)
+  useEffect(() => {
+    // כאן תוכל לבדוק ב-AsyncStorage או במקום אחר אם המשתמש כבר השלים היכרות
+    // לדוגמה:
+    // checkIfMeetingCompleted();
+  }, []);
+
+  const handleMeetingComplete = (data) => {
+    setCity(data.city);
+    setAgeRange(data.ageRange);
+    setFavoriteGenres(data.genre);
+    setProfileImage(data.profileImage);
+    setHasCompletedMeeting(true);
+    
+    // כאן תוכל לשמור ב-AsyncStorage שהמשתמש השלים היכרות
+    // AsyncStorage.setItem('hasCompletedMeeting', 'true');
+    // וגם לשמור את פרטי המשתמש
+  };
+
   const pickProfileImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -47,22 +71,8 @@ export default function ProfileScreen({ navigation, onLogout }) {
     });
     if (!result.canceled) {
       setProfileImage(result.assets[0].uri);
-      setImageModalVisible(false); // סגור את המודל אחרי בחירת תמונה
+      setImageModalVisible(false);
     }
-  };
-
-  const renderBookItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.bookItem}
-      onPress={() => Alert.alert('פרטי ספר', `כאן ייפתח עמוד הספר: ${item.title}`)}
-
-    >
-      <Text style={styles.bookTitle}>{item.title}</Text>
-    </TouchableOpacity>
-  );
-
-  const handleLogout = () => {
-    onLogout();
   };
 
   const openBooksModal = (books, title) => {
@@ -71,9 +81,18 @@ export default function ProfileScreen({ navigation, onLogout }) {
     setModalVisible(true);
   };
 
+  const handleLogout = () => {
+    onLogout();
+  };
+
+  // אם המשתמש לא השלים היכרות, הצג את רכיב ההיכרות
+  if (!hasCompletedMeeting) {
+    return <Meeting onFinish={handleMeetingComplete} />;
+  }
+
+  // אחרת, הצג את מסך הפרופיל
   return (
     <View style={styles.container}>
-      {/* Logout Button */}
       <View style={styles.logoutButtonContainer}>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
           <Ionicons name="log-out-outline" size={24} color="#FF5C5C" />
@@ -82,7 +101,6 @@ export default function ProfileScreen({ navigation, onLogout }) {
 
       <Text style={styles.header}>הפרופיל שלי</Text>
 
-      {/* Profile Image with Modal */}
       <TouchableOpacity onPress={() => setImageModalVisible(true)}>
         <Image
           source={profileImage ? { uri: profileImage } : require('../../assets/adaptive-icon.png')}
@@ -90,6 +108,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
         />
         <Text style={styles.editPhotoText}>ערוך תמונה</Text>
       </TouchableOpacity>
+
       <Modal visible={imageModalVisible} transparent animationType="fade">
         <View style={styles.imageModalBackground}>
           <Pressable style={{ flex: 1 }} onPress={() => setImageModalVisible(false)}>
@@ -107,6 +126,12 @@ export default function ProfileScreen({ navigation, onLogout }) {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      <Text style={styles.label}>עיר מגורים</Text>
+      <Text style={styles.infoText}>{city}</Text>
+
+      <Text style={styles.label}>טווח גיל</Text>
+      <Text style={styles.infoText}>{ageRange}</Text>
 
       <Text style={styles.label}>סוגי ספרים אהובים</Text>
       <TextInput
@@ -136,20 +161,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.subHeader}>הספרים שלי</Text>
-      <FlatList
-        style={styles.myBooks}
-        data={userBooks}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-        <View style={styles.bookItem}>
-            <Text style={styles.bookTitle}>{item.title}</Text>
-        </View>
-        )}
-        contentContainerStyle={styles.bookList}
-      />
 
-      {/* Books Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -221,6 +233,17 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     writingDirection: 'rtl',
   },
+  infoText: {
+    fontSize: 16,
+    marginBottom: 15,
+    color: '#666',
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#F3F6FB',
+    borderRadius: 10,
+  },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
@@ -236,7 +259,7 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row-reverse',
     justifyContent: 'space-around',
-    marginBottom: 25,
+    marginBottom: 15,
   },
   statBox: {
     alignItems: 'center',
@@ -258,29 +281,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     writingDirection: 'rtl',
   },
-  subHeader: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'left',
-    writingDirection: 'rtl',
-    color: '#1C3B72',
-  },
-  bookList: {
-    paddingBottom: 20,
-    textAlign: 'left',
-  },
   bookItem: {
     padding: 14,
     backgroundColor: '#FF5C5C',
     borderRadius: 10,
     marginBottom: 10,
-    flexDirection: 'row-reverse', // RTL
+    flexDirection: 'row-reverse',
     alignItems: 'center'
   },
   bookTitle: {
     fontSize: 16,
-    color: '#1C3B72', // כחול של העמוד
+    color: '#1C3B72',
     textAlign: 'left',
     writingDirection: 'rtl',
     fontWeight: '500',
