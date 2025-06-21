@@ -11,6 +11,7 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import Meeting from '../components/Meeting'; 
@@ -21,6 +22,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
   const [city, setCity] = useState('');
   const [ageRange, setAgeRange] = useState('');
   const [hasCompletedMeeting, setHasCompletedMeeting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [booksGiven, setBooksGiven] = useState([
     { id: '1', title: 'הארי פוטר ואבן החכמים' },
@@ -39,23 +41,54 @@ export default function ProfileScreen({ navigation, onLogout }) {
   const [modalTitle, setModalTitle] = useState('');
   const [imageModalVisible, setImageModalVisible] = useState(false);
 
-  // בדיקה אם המשתמש כבר השלים היכרות (בדרך כלל זה יהיה שמור ב-AsyncStorage או בשרת)
+  // טעינת נתונים מ-AsyncStorage
   useEffect(() => {
-    // כאן תוכל לבדוק ב-AsyncStorage או במקום אחר אם המשתמש כבר השלים היכרות
-    // לדוגמה:
-    // checkIfMeetingCompleted();
+    loadUserData();
   }, []);
 
-  const handleMeetingComplete = (data) => {
+  const loadUserData = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('userData');
+      if (userData) {
+        const parsedData = JSON.parse(userData);
+        setCity(parsedData.city || '');
+        setAgeRange(parsedData.ageRange || '');
+        setFavoriteGenres(parsedData.favoriteGenres || '');
+        setProfileImage(parsedData.profileImage || null);
+        setHasCompletedMeeting(true);
+      }
+    } catch (error) {
+      console.error('שגיאה בטעינת נתוני משתמש:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveUserData = async (data) => {
+    try {
+      await AsyncStorage.setItem('userData', JSON.stringify(data));
+    } catch (error) {
+      console.error('שגיאה בשמירת נתוני משתמש:', error);
+      Alert.alert('שגיאה', 'לא ניתן לשמור את הנתונים');
+    }
+  };
+
+  const handleMeetingComplete = async (data) => {
+    const userData = {
+      city: data.city,
+      ageRange: data.ageRange,
+      favoriteGenres: data.genre,
+      profileImage: data.profileImage,
+    };
+
     setCity(data.city);
     setAgeRange(data.ageRange);
     setFavoriteGenres(data.genre);
     setProfileImage(data.profileImage);
     setHasCompletedMeeting(true);
     
-    // כאן תוכל לשמור ב-AsyncStorage שהמשתמש השלים היכרות
-    // AsyncStorage.setItem('hasCompletedMeeting', 'true');
-    // וגם לשמור את פרטי המשתמש
+    // שמירת הנתונים ב-AsyncStorage
+    await saveUserData(userData);
   };
 
   const pickProfileImage = async () => {
@@ -70,8 +103,33 @@ export default function ProfileScreen({ navigation, onLogout }) {
       aspect: [1, 1],
     });
     if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
+      const newImageUri = result.assets[0].uri;
+      setProfileImage(newImageUri);
       setImageModalVisible(false);
+      
+      // עדכון הנתונים השמורים
+      const currentData = await AsyncStorage.getItem('userData');
+      if (currentData) {
+        const parsedData = JSON.parse(currentData);
+        parsedData.profileImage = newImageUri;
+        await saveUserData(parsedData);
+      }
+    }
+  };
+
+  const updateFavoriteGenres = async (genres) => {
+    setFavoriteGenres(genres);
+    
+    // עדכון הנתונים השמורים
+    try {
+      const currentData = await AsyncStorage.getItem('userData');
+      if (currentData) {
+        const parsedData = JSON.parse(currentData);
+        parsedData.favoriteGenres = genres;
+        await saveUserData(parsedData);
+      }
+    } catch (error) {
+      console.error('שגיאה בעדכון ז\'אנרים:', error);
     }
   };
 
@@ -81,9 +139,51 @@ export default function ProfileScreen({ navigation, onLogout }) {
     setModalVisible(true);
   };
 
-  const handleLogout = () => {
-    onLogout();
+  const handleLogout = async () => {
+    try {
+      // אופציונלי: מחיקת נתונים בעת התנתקות (אם רוצים)
+      // await AsyncStorage.removeItem('userData');
+      onLogout();
+    } catch (error) {
+      console.error('שגיאה בהתנתקות:', error);
+      onLogout();
+    }
   };
+
+  const resetProfile = async () => {
+    Alert.alert(
+      'איפוס פרופיל',
+      'האם אתה בטוח שברצונך לאפס את הפרופיל? פעולה זו תמחק את כל הנתונים.',
+      [
+        { text: 'ביטול', style: 'cancel' },
+        {
+          text: 'אפס',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('userData');
+              setHasCompletedMeeting(false);
+              setCity('');
+              setAgeRange('');
+              setFavoriteGenres('');
+              setProfileImage(null);
+            } catch (error) {
+              console.error('שגיאה באיפוס פרופיל:', error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // אם עדיין טוען נתונים
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={styles.header}>טוען...</Text>
+      </View>
+    );
+  }
 
   // אם המשתמש לא השלים היכרות, הצג את רכיב ההיכרות
   if (!hasCompletedMeeting) {
@@ -94,6 +194,9 @@ export default function ProfileScreen({ navigation, onLogout }) {
   return (
     <View style={styles.container}>
       <View style={styles.logoutButtonContainer}>
+        <TouchableOpacity onPress={resetProfile} style={styles.resetButton}>
+          <Ionicons name="refresh-outline" size={24} color="#FF5C5C" />
+        </TouchableOpacity>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
           <Ionicons name="log-out-outline" size={24} color="#FF5C5C" />
         </TouchableOpacity>
@@ -138,7 +241,7 @@ export default function ProfileScreen({ navigation, onLogout }) {
         style={styles.input}
         placeholder="לדוגמה: רומן, פנטזיה, מדע בדיוני"
         value={favoriteGenres}
-        onChangeText={setFavoriteGenres}
+        onChangeText={updateFavoriteGenres}
         textAlign="right"
         writingDirection="rtl"
         placeholderTextColor="#aaa"
@@ -160,7 +263,6 @@ export default function ProfileScreen({ navigation, onLogout }) {
           <Text style={styles.statLabel}>ספרים שקיבלתי</Text>
         </TouchableOpacity>
       </View>
-
 
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
@@ -198,8 +300,14 @@ const styles = StyleSheet.create({
   logoutButtonContainer: {
     marginTop: 30,
     alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
   },
   logoutButton: {
+    padding: 10,
+  },
+  resetButton: {
     padding: 10,
   },
   header: {

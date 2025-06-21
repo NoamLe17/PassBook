@@ -138,7 +138,7 @@ export default function AddBookScreen({ navigation }) {
         </View>
 
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>מיקום (בחר מהרשימה):</Text>
+          <Text style={styles.label }>מיקום (בחר מהרשימה):</Text>
           <TextInput
             style={styles.input}
             placeholder="הקלד כתובת"
@@ -217,11 +217,13 @@ const styles = StyleSheet.create({
   },
   fieldContainer: {
     marginTop: 15,
+    direction: 'rtl',
   },
   label: {
     fontSize: 16,
     color: '#1C3B72',
     marginBottom: 5,
+    direction: 'rtl',
     fontWeight: 'bold',
   },
   input: {
