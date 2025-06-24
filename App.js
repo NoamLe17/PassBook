@@ -1,94 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import { ActivityIndicator, View, I18nManager, StyleSheet, Text } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, View, I18nManager, StyleSheet, Text, Alert } from 'react-native';
 import Colors from './src/constants/Colors';
-import AppNavigator from './src/navigation/AppNavigator'; // ניווט על פי התחברות
+import AppNavigator from './src/navigation/AppNavigator'; 
+import { AuthProvider, useAuth } from './src/services/AuthContext';
 
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [showSplash, setShowSplash] = useState(true);
+// רכיב פנימי שמשתמש ב-AuthContext
+function AppContent() {
+  const { user, loading, error, clearError } = useAuth();
 
+  // הצגת שגיאות אם יש
   useEffect(() => {
-    // מאפשר RTL – תוכל לשנות לפי הצורך
-    I18nManager.allowRTL(true);
-    I18nManager.forceRTL(true);
-
-    const timer = setTimeout(() => setShowSplash(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const storedUser = await AsyncStorage.getItem('user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        }
-      } catch (e) {
-        console.log('Error reading user from storage:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkUser();
-  }, []);
-
-  const handleLogin = async (userData) => {
-    try {
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-    } catch (e) {
-      console.log('Error saving user to storage:', e);
+    if (error) {
+      Alert.alert(
+        'שגיאה',
+        error,
+        [
+          {
+            text: 'אישור',
+            onPress: clearError,
+          },
+        ]
+      );
     }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('user');
-      setUser(null);
-    } catch (e) {
-      console.log('Error removing user from storage:', e);
-    }
-  };
-
-  if (showSplash) {
-    return (
-      <View style={styles.splash}>
-        <Text style={styles.splashText}>PassBook</Text>
-        <ActivityIndicator size="large" color="#fff" style={{ marginTop: 20 }} />
-      </View>
-    );
-  }
+  }, [error, clearError]);
 
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#FF5C5C" />
+        <ActivityIndicator size="large" color="#4A90E2" />
+        <Text style={styles.loadingText}>טוען...</Text>
+      </View>
+    );
+  }
+
+  return <AppNavigator />;
+}
+
+export default function App() {
+  const [rtlReady, setRtlReady] = useState(false);
+
+  useEffect(() => {
+    const setupRTL = async () => {
+      try {
+        // מאפשר RTL
+        I18nManager.allowRTL(true);
+        if (!I18nManager.isRTL) {
+          I18nManager.forceRTL(true);
+          // ב-React Native יש צורך לפעמים לרענן את האפליקציה
+          // אחרי שינוי RTL, אבל נעשה זאת רק אם זה באמת נדרש
+        }
+        setRtlReady(true);
+      } catch (error) {
+        console.error('שגיאה בהגדרת RTL:', error);
+        // גם אם יש שגיאה, נמשיך עם האפליקציה
+        setRtlReady(true);
+      }
+    };
+
+    setupRTL();
+  }, []);
+
+  if (!rtlReady) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#4A90E2" />
+        <Text style={styles.loadingText}>מכין את האפליקציה...</Text>
       </View>
     );
   }
 
   return (
-    <AppNavigator user={user} onLogin={handleLogin} onLogout={handleLogout} />
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  splash: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-  },
-  splashText: {
-    color: '#fff',
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
 });

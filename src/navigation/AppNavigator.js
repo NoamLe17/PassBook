@@ -8,43 +8,32 @@ import SignUpScreen from '../screens/SignUpScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import AddBookScreen from '../screens/AddBookScreen';
-import Footer from '../components/Footer';
 import ChatScreen from '../screens/ChatScreen';
-import Meeting from '../components/Meeting';
-
+import Footer from '../components/Footer';
+import { useAuth } from '../services/AuthContext';
 
 const AuthStack = createNativeStackNavigator();
 const AppStack = createNativeStackNavigator();
 
-export default function AppNavigator({ user, onLogin, onLogout }) {
-  if (!user) {
-    return (
-      <NavigationContainer>
-        <AuthStack.Navigator screenOptions={{ headerShown: false }}>
-          <AuthStack.Screen name="SignIn">
-            {(props) => <SignInScreen {...props} onLogin={onLogin} />}
-          </AuthStack.Screen>
-          <AuthStack.Screen name="SignUp">
-            {(props) => (
-              <SignUpScreen
-                {...props}
-                onSignUp={onLogin}
-                onBackToSignIn={() => props.navigation.goBack()}
-              />
-            )}
-          </AuthStack.Screen>
-        </AuthStack.Navigator>
-      </NavigationContainer>
-    );
-  }
-
-  // בתוך האפליקציה
+export default function AppNavigator() {
+  const { user, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('Home');
 
   const onTabPress = (tabName, navigation) => {
     setActiveTab(tabName);
     navigation.navigate(tabName);
   };
+
+  if (!isAuthenticated) {
+    return (
+      <NavigationContainer>
+        <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+          <AuthStack.Screen name="SignIn" component={SignInScreen} />
+          <AuthStack.Screen name="SignUp" component={SignUpScreen} />
+        </AuthStack.Navigator>
+      </NavigationContainer>
+    );
+  }
 
   return (
     <NavigationContainer>
@@ -64,7 +53,7 @@ export default function AppNavigator({ user, onLogin, onLogout }) {
         <AppStack.Screen name="Profile">
           {(props) => (
             <View style={{ flex: 1 }}>
-              <ProfileScreen {...props} onLogout={onLogout} />
+              <ProfileScreen {...props} />
               <Footer
                 activeTab={activeTab}
                 onTabPress={(tabName) => onTabPress(tabName, props.navigation)}
@@ -85,7 +74,7 @@ export default function AppNavigator({ user, onLogin, onLogout }) {
           )}
         </AppStack.Screen>     
 
-        <AppStack.Screen name="chat">
+        <AppStack.Screen name="Chat">
           {(props) => (
             <View style={{ flex: 1 }}>
               <ChatScreen {...props} />
@@ -96,7 +85,6 @@ export default function AppNavigator({ user, onLogin, onLogout }) {
             </View>
           )}
         </AppStack.Screen>  
-
       </AppStack.Navigator>
     </NavigationContainer>
   );

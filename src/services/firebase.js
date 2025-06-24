@@ -1,11 +1,10 @@
 import { initializeApp } from 'firebase/app';
 import {
-  getAuth,
+  initializeAuth,
+  getReactNativePersistence,
   signInAnonymously as firebaseSignInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
@@ -31,6 +30,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from 'firebase/storage';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBjdCQ7hZRLnuyc00ALQ52c1QKXOrtI89M",
@@ -43,10 +43,14 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+
+// Initialize Auth with AsyncStorage persistence
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+});
+
 const db = getFirestore(app);
 const storage = getStorage(app);
-const googleProvider = new GoogleAuthProvider();
 
 // Authentication Functions
 export const signInAnonymously = () => firebaseSignInAnonymously(auth);
@@ -54,7 +58,6 @@ export const signUpWithEmail = (email, password) =>
   createUserWithEmailAndPassword(auth, email, password);
 export const signInWithEmail = (email, password) =>
   signInWithEmailAndPassword(auth, email, password);
-export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
 export const signOutUser = () => signOut(auth);
 export const onAuthStateChange = (callback) => onAuthStateChanged(auth, callback);
 
@@ -116,7 +119,7 @@ export const deleteUserProfile = async (userId) => {
 // Image Upload Functions
 export const uploadProfileImage = async (userId, imageUri) => {
   try {
-    // Convert URI to blob
+    // Convert URI to blob for React Native
     const response = await fetch(imageUri);
     const blob = await response.blob();
     
